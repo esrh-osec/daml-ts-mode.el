@@ -77,55 +77,49 @@
     "stock" "template" "then" "try" "type" "via" "viewtype" "where" "with")
   "Daml keywords used for tree-sitter font-lock.")
 
-(defconst daml-ts-mode--eglot-server-programs
+(defconst daml-ts-mode--eglot-commands
   '(("dpm" "damlc" "multi-ide")
     ("daml" "damlc" "multi-ide"))
   "Daml language-server commands, in preference order.")
 
-(defun daml-ts-mode--eglot-command-label (command)
-  "Return display label for Daml language server COMMAND."
-  (string-join command " "))
+(defun daml-ts-mode--eglot-candidate (command)
+  "Return an Eglot selection candidate for COMMAND, if available.
 
-(defun daml-ts-mode--eglot-available-server-programs ()
-  "Return available Daml language-server commands.
+The return value is (LABEL . CONTACT).  LABEL is shown to users; CONTACT is the
+command line Eglot should run, with the executable resolved to an absolute path."
+  (when-let* ((program (executable-find (car command))))
+    (cons (string-join command " ")
+          (cons program (cdr command)))))
 
-Each returned item is (LABEL . CONTACT), where LABEL is the full command shown
-to users and CONTACT is suitable for `eglot-server-programs'."
-  (delq nil
-        (mapcar
-         (lambda (command)
-           (when-let* ((program (executable-find (car command))))
-             (cons (daml-ts-mode--eglot-command-label command)
-                   (cons program (cdr command)))))
-         daml-ts-mode--eglot-server-programs)))
+(defun daml-ts-mode--eglot-candidates ()
+  (delq nil (mapcar #'daml-ts-mode--eglot-candidate
+                    daml-ts-mode--eglot-commands)))
 
-(defun daml-ts-mode--eglot-server-programs ()
-  "Return all configured Daml language-server commands for interactive choice."
-  (mapcar
-   (lambda (command)
-     (cons (daml-ts-mode--eglot-command-label command) command))
-   daml-ts-mode--eglot-server-programs))
+(defun daml-ts-mode--eglot-command-list ()
+  (mapconcat (lambda (command) (string-join command " "))
+             daml-ts-mode--eglot-commands ", "))
 
 (defun daml-ts-mode--eglot-contact (interactive _project)
   "Return an Eglot contact for the Daml language server.
 
 Unlike `eglot-alternatives', this distinguishes commands that share the same
-executable but use different arguments, such as `dpm damlc multi-ide' and
-`dpm damlc ide'."
+executable but use different arguments."
   (unless (and interactive current-prefix-arg)
-    (if interactive
-        (let* ((available (daml-ts-mode--eglot-available-server-programs))
-               (candidates (daml-ts-mode--eglot-server-programs))
-               (default (or (caar available) (caar candidates))))
-          (cdr (assoc (completing-read
-                       "[eglot] Daml language server command: "
-                       (mapcar #'car candidates)
-                       nil t nil nil default)
-                      candidates)))
-      (or (cdar (daml-ts-mode--eglot-available-server-programs))
+    (let ((candidates (daml-ts-mode--eglot-candidates)))
+      (cond
+       ((null candidates)
+        (if interactive
+            nil
           (error "No Daml language server executable found; tried: %s"
-                 (mapconcat #'daml-ts-mode--eglot-command-label
-                            daml-ts-mode--eglot-server-programs ", "))))))
+                 (daml-ts-mode--eglot-command-list))))
+       ((and interactive (cdr candidates))
+        (cdr (assoc (completing-read
+                     "[eglot] Daml language server command: "
+                     (mapcar #'car candidates)
+                     nil t nil nil (caar candidates))
+                    candidates)))
+       (t
+        (cdar candidates))))))
 
 (defconst daml-ts-mode--treesit-language-source
   '(daml "https://github.com/Artifex1/tree-sitter-daml")
