@@ -1,0 +1,15 @@
+* daml-ts-mode.el
+
+[[https://github.com/digital-asset/daml][daml]] major mode for emacs with config for tree-sitter highlighting and
+the eglot lsp client.
+
+This package adds a default grammar url for daml:
+https://github.com/Artifex1/tree-sitter-daml.
+
+This package effectively replaces:
+- https://github.com/bartfailt/daml-mode, uses highlighting rules from
+  =haskell-mode= and the older =haskell-indent= function.
+- https://github.com/bartfailt/daml-lsp, for =lsp-mode=
+
+This package still depends on =haskell-mode= for the newer
+=haskell-indentation= function, which I find totally satisfactory.
