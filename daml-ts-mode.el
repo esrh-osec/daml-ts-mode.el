@@ -212,7 +212,9 @@ single-line signature for echo-area display."
                                        echo)
                                   (and info (string-match "\n" info))))))))
        :deferred :textDocument/hover))
-    (eglot--highlight-piggyback callback)
+    ;; Highlight via the old piggyback helper on eglot <= 1.17.x; newer eglot has the standalone `eglot-highlight-eldoc-function'.
+    (when (fboundp 'eglot--highlight-piggyback)
+      (eglot--highlight-piggyback callback))
     t))
 
 (defun daml-ts-mode--setup-eglot-eldoc ()
