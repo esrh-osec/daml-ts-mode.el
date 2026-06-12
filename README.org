@@ -17,8 +17,9 @@ This package still depends on =haskell-mode= for the newer
 ** Installation
 With straight:
 
-#+begin_src
-(sup '(daml-ts-mode
-       :host github
-       :repo "esrh-osec/daml-ts-mode.el"))
+#+begin_src emacs-lisp
+(straight-use-package
+ '(daml-ts-mode
+   :host github
+   :repo "esrh-osec/daml-ts-mode.el"))
 #+end_src
