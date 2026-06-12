@@ -42,6 +42,7 @@
 
 (defvar eldoc-documentation-functions)
 (defvar eglot-server-programs)
+(defvar eglot-ignored-server-capabilities)
 (defvar markdown-code-lang-modes)
 (declare-function eglot--TextDocumentPositionParams "eglot" ())
 (declare-function eglot--current-server-or-lose "eglot" ())
@@ -229,6 +230,16 @@ single-line signature for echo-area display."
       (remove-hook 'eldoc-documentation-functions
                    #'daml-ts-mode--eglot-hover-eldoc-function t))))
 
+(defun daml-ts-mode--ignore-unsupported-capabilities ()
+  "Ignore LSP capabilities the Daml multi-IDE advertises but cannot serve.
+The server announces `:semanticTokensProvider' yet fatal-errors on
+`textDocument/semanticTokens/full', so ignore it buffer-locally before Eglot
+attaches and `eglot-semantic-tokens-mode' fires the request."
+  (setq-local eglot-ignored-server-capabilities
+              (cons :semanticTokensProvider
+                    (and (boundp 'eglot-ignored-server-capabilities)
+                         (default-value 'eglot-ignored-server-capabilities)))))
+
 (defun daml-ts-mode--font-lock-settings ()
   "Return tree-sitter font-lock settings for Daml."
   (treesit-font-lock-rules
@@ -318,6 +329,7 @@ single-line signature for echo-area display."
   (setq-local comment-start-skip "\\(?:--+\\|{-\\)\\s-*")
   (setq-local comment-end "")
   (setq-local indent-tabs-mode nil)
+  (daml-ts-mode--ignore-unsupported-capabilities)
   (daml-ts-mode--setup-indent)
   (treesit-major-mode-setup))
 
